@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>MYATS</title>
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- External CSS -->
+  <link rel="stylesheet" href="style.css" />
+</head>
+
+<body>
+
+  <!-- LANDING PAGE -->
+  <section class="landing-page">
+
+    <div class="blur-bg"></div>
+
+    <div class="landing-content">
+      <h1>
+        Optimize Your Resume.<br />
+        Get Hired Faster.
+      </h1>
+
+      <p>
+        Our ATS system analyzes your resume and helps you match with the right opportunities.
+      </p>
+
+      <a href="#uploadPage">
+        <button class="primary-btn">
+          Get Started →
+        </button>
+      </a>
+    </div>
+
+  </section>
+
+  <!-- UPLOAD PAGE -->
+  <section id="uploadPage" class="upload-page">
+
+    <!-- NAVBAR -->
+    <nav class="navbar">
+
+      <div class="nav-links">
+        <a href="#">About</a>
+        <a href="#">Contact Us</a>
+        <a href="#">Track Resume Progress</a>
+      </div>
+
+      <div class="logo">
+        MY<span>ATS</span>
+      </div>
+
+    </nav>
+
+    <!-- MAIN CONTAINER -->
+    <div class="main-container">
+
+      <!-- INPUT SECTION -->
+      <div class="input-grid">
+
+        <div>
+          <label>Company Name</label>
+          <input type="text" placeholder="Enter company name">
+        </div>
+
+        <div>
+          <label>Your Name</label>
+          <input type="text" placeholder="Enter your full name">
+        </div>
+
+        <div>
+          <label>Job Description</label>
+          <textarea rows="3" placeholder="Paste job description here..."></textarea>
+        </div>
+
+      </div>
+
+      <!-- DROP AREA -->
+      <div class="drop-area">
+
+        <div class="upload-icon">☁</div>
+
+        <h2>Drag & Drop your resume here</h2>
+
+        <p>PDF, DOCX only (Max. 10MB)</p>
+
+        <span>or</span>
+
+        <button class="browse-btn">
+          Browse Files
+        </button>
+
+      </div>
+
+      <!-- RESULT BUTTON -->
+      <div class="result-btn-container">
+        <a href="#resultPage">
+          <button class="primary-btn">
+            ✨ See Result
+          </button>
+        </a>
+      </div>
+
+    </div>
+
+  </section>
+
+  <!-- RESULT PAGE -->
+  <section id="resultPage" class="result-page">
+
+    <div class="result-container">
+
+      <!-- HEADER -->
+      <div class="result-header">
+
+        <div class="nav-links">
+          <a href="#">About</a>
+          <a href="#">Contact Us</a>
+          <a href="#">Track Resume Progress</a>
+        </div>
+
+        <div class="logo">
+          MY<span>ATS</span>
+        </div>
+
+      </div>
+
+      <!-- RESULT GRID -->
+      <div class="result-grid">
+
+        <!-- SCORE CARD -->
+        <div class="card center-card">
+
+          <h2>ATS Match Score</h2>
+
+          <div class="score-circle">
+
+            <div>
+              <h1>85%</h1>
+              <p class="green-text">Good Match</p>
+            </div>
+
+          </div>
+
+        </div>
+
+        <!-- BREAKDOWN -->
+        <div class="card">
+
+          <h2>Score Breakdown</h2>
+
+          <div class="progress-group">
+
+            <div class="progress-item">
+              <div class="progress-label">
+                <span>Skills Match</span>
+                <span>90%</span>
+              </div>
+
+              <div class="progress-bar">
+                <div class="progress-fill w-90"></div>
+              </div>
+            </div>
+
+            <div class="progress-item">
+              <div class="progress-label">
+                <span>Keyword Match</span>
+                <span>80%</span>
+              </div>
+
+              <div class="progress-bar">
+                <div class="progress-fill w-80"></div>
+              </div>
+            </div>
+
+            <div class="progress-item">
+              <div class="progress-label">
+                <span>Experience Match</span>
+                <span>85%</span>
+              </div>
+
+              <div class="progress-bar">
+                <div class="progress-fill w-85"></div>
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+
+        <!-- SKILLS -->
+        <div class="skills-column">
+
+          <div class="card">
+
+            <h2>Matched Skills</h2>
+
+            <div class="tags">
+              <span class="green-tag">React</span>
+              <span class="green-tag">JavaScript</span>
+              <span class="green-tag">Node.js</span>
+              <span class="green-tag">MongoDB</span>
+            </div>
+
+          </div>
+
+          <div class="card">
+
+            <h2>Missing Keywords</h2>
+
+            <div class="tags">
+              <span class="red-tag">AWS</span>
+              <span class="red-tag">Docker</span>
+              <span class="red-tag">Kubernetes</span>
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+
+      <!-- RECOMMENDATION -->
+      <div class="card recommendation">
+
+        <h2>Recommendations</h2>
+
+        <ul>
+          <li>• Add more cloud technologies experience.</li>
+          <li>• Include measurable achievements.</li>
+          <li>• Improve keyword optimization.</li>
+          <li>• Add relevant certifications.</li>
+        </ul>
+
+      </div>
+
+    </div>
+
+  </section>
+
+</body>
+</html>

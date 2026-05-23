@@ -11,6 +11,150 @@
   <!-- External CSS -->
   <link rel="stylesheet" href="style.css" />
 </head>
+<script>
+
+let selectedFile = null;
+
+// ----------------------------
+// File Selection
+// ----------------------------
+document
+  .getElementById("resumeInput")
+  .addEventListener("change", function(event) {
+
+    selectedFile = event.target.files[0];
+
+    document.getElementById(
+      "selectedFile"
+    ).innerText = selectedFile.name;
+});
+
+
+// ----------------------------
+// Analyze Resume
+// ----------------------------
+async function analyzeResume() {
+
+  const companyName =
+    document.getElementById("companyName").value;
+
+  const userName =
+    document.getElementById("userName").value;
+
+  const jobDescription =
+    document.getElementById("jobDescription").value;
+
+  // Validation
+  if (!selectedFile) {
+    alert("Please upload a resume.");
+    return;
+  }
+
+  // Loading
+  document.getElementById(
+    "loadingText"
+  ).style.display = "block";
+
+  try {
+
+    // Create form data
+    const formData = new FormData();
+
+    formData.append("resume", selectedFile);
+    formData.append("company_name", companyName);
+    formData.append("user_name", userName);
+    formData.append("job_description", jobDescription);
+
+    // Send to Flask backend
+    const response = await fetch(
+      "http://127.0.0.1:5000/analyze",
+      {
+        method: "POST",
+        body: formData
+      }
+    );
+
+    const data = await response.json();
+
+    // Parse AI response
+    const result = JSON.parse(data.result);
+
+    // Update UI
+    updateResults(result);
+
+    // Scroll to result page
+    window.location.href = "#resultPage";
+
+  } catch (error) {
+
+    console.error(error);
+
+    alert("Error analyzing resume");
+
+  } finally {
+
+    document.getElementById(
+      "loadingText"
+    ).style.display = "none";
+  }
+}
+
+
+// ----------------------------
+// Update Result UI
+// ----------------------------
+function updateResults(result) {
+
+  // Match Score
+  document.getElementById(
+    "matchScore"
+  ).innerText = result.match_score;
+
+  // Matched Skills
+  const matchedSkills =
+    document.getElementById("matchedSkills");
+
+  matchedSkills.innerHTML = "";
+
+  result.skills.forEach(skill => {
+
+    matchedSkills.innerHTML += `
+      <span class="green-tag">
+        ${skill}
+      </span>
+    `;
+  });
+
+  // Missing Skills
+  const missingSkills =
+    document.getElementById("missingSkills");
+
+  missingSkills.innerHTML = "";
+
+  result.weaknesses.forEach(skill => {
+
+    missingSkills.innerHTML += `
+      <span class="red-tag">
+        ${skill}
+      </span>
+    `;
+  });
+
+  // Recommendations
+  const recommendations =
+    document.getElementById("recommendations");
+
+  recommendations.innerHTML = "";
+
+  result.strengths.forEach(item => {
+
+    recommendations.innerHTML += `
+      <li>• ${item}</li>
+    `;
+  });
+}
+
+</script>
 
 <body>
 
@@ -90,21 +234,32 @@
 
         <span>or</span>
 
-        <button class="browse-btn">
-          Browse Files
-        </button>
+       <input
+  type="file"
+  id="resumeInput"
+  accept=".pdf,.doc,.docx"
+  hidden
+/>
+
+<button
+  class="browse-btn"
+  onclick="document.getElementById('resumeInput').click()"
+>
+  Browse Files
+</button>
+
+<p id="selectedFile"></p>
 
       </div>
 
       <!-- RESULT BUTTON -->
-      <div class="result-btn-container">
-        <a href="#resultPage">
-          <button class="primary-btn">
-            ✨ See Result
-          </button>
-        </a>
-      </div>
 
+ <button
+  class="primary-btn"
+  onclick="analyzeResume()"
+>
+  ✨ Analyze Resume
+</button>
     </div>
 
   </section>
@@ -140,8 +295,8 @@
           <div class="score-circle">
 
             <div>
-              <h1>85%</h1>
-              <p class="green-text">Good Match</p>
+            <h1 id="matchScore">0%</h1>
+              <div class="tags" id="matchedSkills">
             </div>
 
           </div>
@@ -156,7 +311,7 @@
           <div class="progress-group">
 
             <div class="progress-item">
-              <div class="progress-label">
+              <div class="tags" id="matchedSkills">
                 <span>Skills Match</span>
                 <span>90%</span>
               </div>
@@ -166,7 +321,7 @@
               </div>
             </div>
 
-            <div class="progress-item">
+            <div class="tags" id="missingSkills">
               <div class="progress-label">
                 <span>Keyword Match</span>
                 <span>80%</span>
@@ -195,15 +350,12 @@
         <!-- SKILLS -->
         <div class="skills-column">
 
-          <div class="card">
+          
 
             <h2>Matched Skills</h2>
 
             <div class="tags">
-              <span class="green-tag">React</span>
-              <span class="green-tag">JavaScript</span>
-              <span class="green-tag">Node.js</span>
-              <span class="green-tag">MongoDB</span>
+              <div class="tags" id="matchedSkills">
             </div>
 
           </div>
@@ -212,10 +364,7 @@
 
             <h2>Missing Keywords</h2>
 
-            <div class="tags">
-              <span class="red-tag">AWS</span>
-              <span class="red-tag">Docker</span>
-              <span class="red-tag">Kubernetes</span>
+          <div class="tags" id="missingSkills">
             </div>
 
           </div>
@@ -229,12 +378,7 @@
 
         <h2>Recommendations</h2>
 
-        <ul>
-          <li>• Add more cloud technologies experience.</li>
-          <li>• Include measurable achievements.</li>
-          <li>• Improve keyword optimization.</li>
-          <li>• Add relevant certifications.</li>
-        </ul>
+      <ul id="recommendations">
 
       </div>
 

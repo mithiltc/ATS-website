@@ -1,16 +1,15 @@
-from fastapi import FastAPI, UploadFile, File
+from fastapi import FastAPI, File, UploadFile, Form
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-
-import pdfplumber
+from PyPDF2 import PdfReader
+import anthropic
 import io
-import re
 
 app = FastAPI()
 
-# -------------------------------
-# CORS
-# -------------------------------
+# -----------------------------
+# Enable CORS
+# -----------------------------
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -19,202 +18,184 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# -------------------------------
-# ATS SKILLS DATABASE
-# -------------------------------
-REQUIRED_SKILLS = [
-    "python",
-    "java",
-    "html",
-    "css",
-    "javascript",
-    "react",
-    "nodejs",
-    "sql",
-    "mongodb",
-    "machine learning",
-    "fastapi",
-    "flask",
-    "git",
-    "github",
-    "api",
-    "tailwind",
-]
+# -----------------------------
+# Claude API Client
+# -----------------------------
+client = anthropic.Anthropic(
+    api_key="your-api-key-here"
+)
 
-# -------------------------------
-# HOME ROUTE
-# -------------------------------
+# -----------------------------
+# Home Route
+# -----------------------------
 @app.get("/")
-def home():
+async def home():
     return {
-        "message": "MYATS Backend Running"
+        "message": "ATS Backend Running"
     }
 
 
-# -------------------------------
-# PDF TEXT EXTRACTION
-# -------------------------------
-def extract_text_from_pdf(pdf_file):
-
-    text = ""
-
-    with pdfplumber.open(pdf_file) as pdf:
-
-        for page in pdf.pages:
-
-            page_text = page.extract_text()
-
-            if page_text:
-                text += page_text + " "
-
-    return text.lower()
-
-
-# -------------------------------
-# ATS SCORING FUNCTION
-# -------------------------------
-def calculate_ats_score(resume_text, job_description):
-
-    matched_skills = []
-
-    # Combine JD + Resume
-    combined_text = (
-        resume_text + " " + job_description.lower()
-    )
-
-    for skill in REQUIRED_SKILLS:
-
-        if re.search(
-            r"\b" + re.escape(skill) + r"\b",
-            combined_text
-        ):
-
-            matched_skills.append(skill)
-
-    # Score Calculation
-    score = int(
-        (len(matched_skills) / len(REQUIRED_SKILLS)) * 100
-    )
-
-    # Missing Skills
-    missing_skills = [
-        skill
-        for skill in REQUIRED_SKILLS
-        if skill not in matched_skills
-    ]
-
-    # Recommendations
-    recommendations = []
-
-    if score < 40:
-        recommendations.append(
-            "Add more technical skills to improve ATS score."
-        )
-
-    if "github" not in matched_skills:
-        recommendations.append(
-            "Add GitHub projects to strengthen your profile."
-        )
-
-    if "machine learning" not in matched_skills:
-        recommendations.append(
-            "Include domain-specific technologies."
-        )
-
-    if len(matched_skills) < 5:
-        recommendations.append(
-            "Optimize your resume with more keywords from the job description."
-        )
-
-    return (
-        score,
-        matched_skills,
-        missing_skills,
-        recommendations
-    )
-
-
-# -------------------------------
-# RESUME ANALYSIS API
-# -------------------------------
-@app.post("/upload-resume")
-async def upload_resume(
-
-    file: UploadFile = File(...),
-    company_name: str = "",
-    user_name: str = "",
-    job_description: str = ""
-
+# -----------------------------
+# Analyze Resume Route
+# -----------------------------
+@app.post("/analyze")
+async def analyze_resume(
+    resume: UploadFile = File(...),
+    job_description: str = Form(default="")
 ):
 
-    # -------------------------------
-    # FILE VALIDATION
-    # -------------------------------
-    allowed_types = [
-        "application/pdf"
+    if not resume:
+        return JSONResponse(
+            status_code=400,
+            content={"error": "No resume uploaded"}
+        )
+
+    # -----------------------------
+    # Extract PDF Text
+    # -----------------------------
+    text = ""
+
+    try:
+        pdf_bytes = await resume.read()
+        pdf_stream = io.BytesIO(pdf_bytes)
+
+        reader = PdfReader(pdf_stream)
+
+        for page in reader.pages:
+            extracted = page.extract_text()
+            if extracted:
+                text += extracted
+
+    except Exception as e:
+        return JSONResponse(
+            status_code=500,
+            content={"error": str(e)}
+        )
+
+    # -----------------------------
+    # Skills List
+    # -----------------------------
+    skills = [
+        # Programming
+        "python", "java", "javascript", "typescript", "c++", "c#", "r", "kotlin", "swift",
+
+        # Web
+        "html", "css", "react", "angular", "vue", "node", "flask", "django", "fastapi",
+
+        # Data
+        "sql", "mysql", "postgresql", "mongodb", "excel", "tableau", "power bi",
+
+        # Cloud & Tools
+        "aws", "azure", "docker", "git", "linux", "api", "rest",
+
+        # Soft Skills
+        "communication", "leadership", "teamwork", "management", "problem solving",
+
+        # General
+        "machine learning",
+        "deep learning",
+        "data analysis",
+        "project management"
     ]
 
-    if file.content_type not in allowed_types:
+    # -----------------------------
+    # Skill Matching
+    # -----------------------------
+    matched_skills = [
+        skill for skill in skills
+        if skill.lower() in text.lower()
+    ]
 
-        return JSONResponse(
-            status_code=400,
-            content={
-                "error": "Only PDF files are allowed"
-            }
+    missing_skills = [
+        skill for skill in skills
+        if skill.lower() not in text.lower()
+    ]
+
+    # -----------------------------
+    # ATS Score Calculation
+    # -----------------------------
+    if job_description:
+
+        jd_skills = [
+            skill for skill in skills
+            if skill.lower() in job_description.lower()
+        ]
+
+        if jd_skills:
+            jd_matches = [
+                skill for skill in jd_skills
+                if skill.lower() in text.lower()
+            ]
+
+            score = int(
+                (len(jd_matches) / len(jd_skills)) * 100
+            )
+
+        else:
+            score = int(
+                (len(matched_skills) / len(skills)) * 100
+            )
+
+    else:
+        score = int(
+            (len(matched_skills) / len(skills)) * 100
         )
 
-    # -------------------------------
-    # READ PDF
-    # -------------------------------
-    contents = await file.read()
+    # -----------------------------
+    # AI Summary using Claude
+    # -----------------------------
+    try:
 
-    pdf_file = io.BytesIO(contents)
+        prompt = f"""
+You are an ATS assistant. A resume was analyzed.
 
-    # -------------------------------
-    # EXTRACT TEXT
-    # -------------------------------
-    resume_text = extract_text_from_pdf(pdf_file)
+- ATS Match Score: {score}%
+- Matched Skills: {", ".join(matched_skills) if matched_skills else "None"}
+- Missing Skills: {", ".join(missing_skills) if missing_skills else "None"}
+- Job Description: {job_description if job_description else "Not provided"}
 
-    if not resume_text.strip():
+Give a short 3-5 sentence friendly summary:
+1. What skills the candidate has
+2. How well they match the job
+3. What they should improve
+"""
 
-        return JSONResponse(
-            status_code=400,
-            content={
-                "error": "Unable to extract text from resume"
-            }
+        message = client.messages.create(
+            model="claude-sonnet-4-20250514",
+            max_tokens=1024,
+            messages=[
+                {
+                    "role": "user",
+                    "content": prompt
+                }
+            ]
         )
 
-    # -------------------------------
-    # CALCULATE ATS SCORE
-    # -------------------------------
-    (
-        score,
-        matched_skills,
-        missing_skills,
-        recommendations
+        ai_summary = message.content[0].text
 
-    ) = calculate_ats_score(
-        resume_text,
-        job_description
-    )
+    except Exception as e:
+        ai_summary = f"AI summary unavailable: {str(e)}"
 
-    # -------------------------------
-    # RESPONSE
-    # -------------------------------
+    # -----------------------------
+    # Final Response
+    # -----------------------------
     return {
-
-        "company_name": company_name,
-
-        "user_name": user_name,
-
-        "ATS Score": score,
-
-        "Matched Skills": matched_skills,
-
-        "Missing Skills": missing_skills,
-
-        "Recommendations": recommendations,
-
-        "Resume Preview": resume_text[:1000]
-
+        "result": {
+            "match_score": f"{score}",
+            "skills": matched_skills,
+            "weaknesses": missing_skills,
+            "strengths": [
+                "Resume successfully analyzed",
+                "Skill matching completed",
+                "ATS screening ready"
+            ],
+            "ai_summary": ai_summary
+        }
     }
+
+
+# -----------------------------
+# Run Server
+# -----------------------------
+# Run using:
+# uvicorn main:app --reload

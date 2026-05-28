@@ -4,7 +4,11 @@ from fastapi.responses import JSONResponse
 from PyPDF2 import PdfReader
 import anthropic
 import io
+from pymongo import MongoClient
 
+client = MongoClient("mongodb://localhost:27017/")
+db = client["resumeDB"]
+collection = db["resumes"]
 app = FastAPI()
 
 # -----------------------------
